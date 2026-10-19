@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心桥 HeartBridge - 夫妻情感诊断与修复</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 首页 -->
+    <div id="page-home" class="page active">
+        <div class="hero">
+            <div class="logo">
+                <span class="logo-icon">🌉</span>
+                <h1>心桥</h1>
+                <p class="subtitle">HeartBridge</p>
+            </div>
+            <p class="tagline">重建爱的连接，修复夫妻关系</p>
+            <p class="description">基于专业心理学理论，帮助异地夫妻识别问题、改善沟通、重建感情</p>
+            <button class="btn-primary" onclick="startDiagnosis()">
+                <span>开始情感诊断</span>
+                <span class="arrow">→</span>
+            </button>
+            <div class="features">
+                <div class="feature">
+                    <span class="feature-icon">🔍</span>
+                    <span>智能诊断</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">💬</span>
+                    <span>对话分析</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">📋</span>
+                    <span>修复方案</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">📈</span>
+                    <span>健康追踪</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 角色选择页 -->
+    <div id="page-role" class="page">
+        <div class="container">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 10%"></div>
+            </div>
+            <h2>你是？</h2>
+            <p class="section-desc">让我们了解你的角色，以便提供更精准的分析</p>
+            <div class="role-cards">
+                <div class="role-card" onclick="selectRole('husband')">
+                    <span class="role-icon">👨</span>
+                    <h3>丈夫</h3>
+                    <p>我是丈夫，想改善和妻子的关系</p>
+                </div>
+                <div class="role-card" onclick="selectRole('wife')">
+                    <span class="role-icon">👩</span>
+                    <h3>妻子</h3>
+                    <p>我是妻子，想改善和丈夫的关系</p>
+                </div>
+                <div class="role-card" onclick="selectRole('both')">
+                    <span class="role-icon">👫</span>
+                    <h3>我们一起</h3>
+                    <p>夫妻双方一起参与</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 基础信息页 -->
+    <div id="page-basic" class="page">
+        <div class="container">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 20%"></div>
+            </div>
+            <h2>基础信息</h2>
+            <p class="section-desc">了解你们的关系背景</p>
+            <div class="form-group">
+                <label>结婚多久了？</label>
+                <div class="option-group">
+                    <button class="option-btn" onclick="selectOption(this, 'marriageYears', '1年以内')">1年以内</button>
+                    <button class="option-btn" onclick="selectOption(this, 'marriageYears', '1-3年')">1-3年</button>
+                    <button class="option-btn" onclick="selectOption(this, 'marriageYears', '3-5年')">3-5年</button>
+                    <button class="option-btn" onclick="selectOption(this, 'marriageYears', '5-10年')">5-10年</button>
+                    <button class="option-btn" onclick="selectOption(this, 'marriageYears', '10年以上')">10年以上</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>异地多长时间了？</label>
+                <div class="option-group">
+                    <button class="option-btn" onclick="selectOption(this, 'remoteYears', '半年以内')">半年以内</button>
+                    <button class="option-btn" onclick="selectOption(this, 'remoteYears', '半年-1年')">半年-1年</button>
+                    <button class="option-btn" onclick="selectOption(this, 'remoteYears', '1-2年')">1-2年</button>
+                    <button class="option-btn" onclick="selectOption(this, 'remoteYears', '2年以上')">2年以上</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>多久见一次面？</label>
+                <div class="option-group">
+                    <button class="option-btn" onclick="selectOption(this, 'meetFrequency', '每周')">每周</button>
+                    <button class="option-btn" onclick="selectOption(this, 'meetFrequency', '每月')">每月</button>
+                    <button class="option-btn" onclick="selectOption(this, 'meetFrequency', '每季度')">每季度</button>
+                    <button class="option-btn" onclick="selectOption(this, 'meetFrequency', '半年或更少')">半年或更少</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>有孩子吗？</label>
+                <div class="option-group">
+                    <button class="option-btn" onclick="selectOption(this, 'hasChildren', '没有')">没有</button>
+                    <button class="option-btn" onclick="selectOption(this, 'hasChildren', '1个')">1个</button>
+                    <button class="option-btn" onclick="selectOption(this, 'hasChildren', '2个')">2个</button>
+                    <button class="option-btn" onclick="selectOption(this, 'hasChildren', '3个或以上')">3个或以上</button>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="goToEmotionAssessment()">下一步</button>
+        </div>
+    </div>
+
+    <!-- 情感状态评估页 -->
+    <div id="page-emotion" class="page">
+        <div class="container">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 35%"></div>
+            </div>
+            <h2>情感状态评估</h2>
+            <p class="section-desc">用1-10分来评估以下问题（1分最低，10分最高）</p>
+            
+            <div class="slider-group">
+                <label>你对这段婚姻的满意度是多少？</label>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" class="slider" id="satisfaction" oninput="updateSliderValue(this, 'satisfactionValue')">
+                    <span class="slider-value" id="satisfactionValue">5</span>
+                </div>
+                <div class="slider-labels">
+                    <span>非常不满意</span>
+                    <span>非常满意</span>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label>你觉得对方对你的爱意有多少？</label>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" class="slider" id="lovePerceived" oninput="updateSliderValue(this, 'lovePerceivedValue')">
+                    <span class="slider-value" id="lovePerceivedValue">5</span>
+                </div>
+                <div class="slider-labels">
+                    <span>感觉不到爱</span>
+                    <span>满满的爱</span>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label>你对婚姻未来的信心有多少？</label>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" class="slider" id="confidence" oninput="updateSliderValue(this, 'confidenceValue')">
+                    <span class="slider-value" id="confidenceValue">5</span>
+                </div>
+                <div class="slider-labels">
+                    <span>没有信心</span>
+                    <span>非常有信心</span>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label>你们目前的沟通质量如何？</label>
+                <div class="slider-container">
+                    <input type="range" min="1" max="10" value="5" class="slider" id="communication" oninput="updateSliderValue(this, 'communicationValue')">
+                    <span class="slider-value" id="communicationValue">5</span>
+                </div>
+                <div class="slider-labels">
+                    <span>无法沟通</span>
+                    <span>沟通顺畅</span>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="goToCognition()">下一步</button>
+        </div>
+    </div>
+
+    <!-- 认知归因评估页 -->
+    <div id="page-cognition" class="page">
+        <div class="container">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 50%"></div>
+            </div>
+            <h2>认知与归因</h2>
+            <p class="section-desc">了解你如何看待关系中的问题</p>
+
+            <div class="form-group">
+                <label>当你们之间出现问题时，你通常认为是？</label>
+                <div class="option-group vertical">
+                    <button class="option-btn large" onclick="selectOption(this, 'attribution', '主要是对方的问题')">
+                        <strong>主要是对方的问题</strong>
+                        <span>TA需要改变</span>
+                    </button>
+                    <button class="option-btn large" onclick="selectOption(this, 'attribution', '主要是我自己的问题')">
+                        <strong>主要是我自己的问题</strong>
+                        <span>我需要改变</span>
+                    </button>
+                    <button class="option-btn large" onclick="selectOption(this, 'attribution', '双方都有责任')">
+                        <strong>双方都有责任</strong>
+                        <span>我们需要一起努力</span>
+                    </button>
+                    <button class="option-btn large" onclick="selectOption(this, 'attribution', '主要是外部环境因素')">
+                        <strong>主要是外部环境因素</strong>
+                        <span>比如工作、距离等</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label>你觉得自己为这段关系付出了百分之多少？</label>
+                <div class="slider-container">
+                    <input type="range" min="0" max="100" value="50" class="slider" id="selfEffort" oninput="updateSliderValue(this, 'selfEffortValue', '%')">
+                    <span class="slider-value" id="selfEffortValue">50%</span>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label>你觉得对方为这段关系付出了百分之多少？</label>
+                <div class="slider-container">
+                    <input type="range" min="0" max="100" value="50" class="slider" id="partnerEffort" oninput="updateSliderValue(this, 'partnerEffortValue', '%')">
+                    <span class="slider-value" id="partnerEffortValue">50%</span>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="goToDialogue()">下一步</button>
+        </div>
+    </div>
+
+    <!-- 对话分析页 -->
+    <div id="page-dialogue" class="page">
+        <div class="container">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 70%"></div>
+            </div>
+            <h2>对话分析</h2>
+            <p class="section-desc">分享一段你们最近的对话，我们来分析沟通模式</p>
+
+            <div class="form-group">
+                <label>最近你们之间发生了什么？简单描述一下背景</label>
+                <textarea class="text-input" id="situation" placeholder="比如：最近因为孩子的教育问题产生了分歧..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>对方说了什么？（尽量还原原话）</label>
+                <textarea class="text-input" id="partnerDialogue" placeholder="粘贴对方的原话，或者尽量回忆..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>你当时是怎么回应的？</label>
+                <textarea class="text-input" id="myResponse" placeholder="你说了什么，或者你心里怎么想..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>你当时的感受是什么？</label>
+                <div class="emotion-tags">
+                    <span class="emotion-tag" onclick="toggleEmotion(this)">委屈</span>
+                    <span class="emotion-tag" onclick="toggleEmotion(this)">愤怒</span>
+                    <span class="emotion-tag" onclick="toggleEmotion(this)">无奈</span>
+                    <span class="emotion-tag" onclick="toggleEmotion(this)">伤心</span>
+                    <span class="emotion-tag" onclick="toggleEmotion(this)">失望</span>
+                    <span class="emotion-tag" onclick="toggleEmotion(this)">焦虑</span>
+                    <span class="emotion-tag" onclick="toggleEmotion(this)">疲惫</span>
+                    <span class="emotion-tag" onclick="toggleEmotion(this)">困惑</span>
+                    <span class="emotion-tag" onclick="toggleEmotion(this)">害怕</span>
+                    <span class="emotion-tag" onclick="toggleEmotion(this)">不被理解</span>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="generateReport()">生成诊断报告</button>
+        </div>
+    </div>
+
+    <!-- 分析报告页 -->
+    <div id="page-report" class="page">
+        <div class="container">
+            <div class="report-header">
+                <span class="report-icon">📊</span>
+                <h2>你们的关系诊断报告</h2>
+                <p class="report-date">生成时间：<span id="reportDate"></span></p>
+            </div>
+
+            <!-- 健康度评分 -->
+            <div class="report-section">
+                <h3>关系健康度</h3>
+                <div class="health-score">
+                    <div class="score-circle" id="overallScore">
+                        <span class="score-number">--</span>
+                        <span class="score-label">/100</span>
+                    </div>
+                    <div class="score-detail">
+                        <div class="score-item">
+                            <span class="score-name">情感连接度</span>
+                            <div class="score-bar">
+                                <div class="score-fill" id="connectionBar"></div>
+                            </div>
+                            <span class="score-num" id="connectionScore">--</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-name">沟通质量</span>
+                            <div class="score-bar">
+                                <div class="score-fill" id="communicationBar"></div>
+                            </div>
+                            <span class="score-num" id="communicationScore">--</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-name">冲突处理</span>
+                            <div class="score-bar">
+                                <div class="score-fill" id="conflictBar"></div>
+                            </div>
+                            <span class="score-num" id="conflictScore">--</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-name">亲密度</span>
+                            <div class="score-bar">
+                                <div class="score-fill" id="intimacyBar"></div>
+                            </div>
+                            <span class="score-num" id="intimacyScore">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 核心问题 -->
+            <div class="report-section">
+                <h3>核心问题诊断</h3>
+                <div class="problems" id="problemsList">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 依恋类型 -->
+            <div class="report-section">
+                <h3>依恋类型分析</h3>
+                <div class="attachment-analysis" id="attachmentAnalysis">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 对话分析 -->
+            <div class="report-section">
+                <h3>对话深度分析</h3>
+                <div class="dialogue-analysis" id="dialogueAnalysis">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 修复方案 -->
+            <div class="report-section">
+                <h3>修复方案</h3>
+                <div class="solutions" id="solutionsList">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="showActionPlan()">查看行动计划</button>
+            <button class="btn-secondary" onclick="restart()">重新评估</button>
+        </div>
+    </div>
+
+    <!-- 行动计划页 -->
+    <div id="page-action" class="page">
+        <div class="container">
+            <h2>你们的修复计划</h2>
+            <p class="section-desc">从今天开始，一步一步重建你们的感情</p>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker">1</div>
+                    <div class="timeline-content">
+                        <h3>第一周：情绪降温与认知重构</h3>
+                        <div class="tasks">
+                            <div class="task">
+                                <input type="checkbox" id="task1">
+                                <label for="task1">每日感恩练习：每天记录对方1个让你感激的具体行为</label>
+                            </div>
+                            <div class="task">
+                                <input type="checkbox" id="task2">
+                                <label for="task2">认知重构：当出现"TA不关心我"的想法时，写下3个反例</label>
+                            </div>
+                            <div class="task">
+                                <input type="checkbox" id="task3">
+                                <label for="task3">暂停技术：感到愤怒时，说"我需要冷静一下，30分钟后再谈"</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">2</div>
+                    <div class="timeline-content">
+                        <h3>第二周：沟通技能训练</h3>
+                        <div class="tasks">
+                            <div class="task">
+                                <input type="checkbox" id="task4">
+                                <label for="task4">"我"语句练习：将"你总是..."改为"当...发生时，我感到..."</label>
+                            </div>
+                            <div class="task">
+                                <input type="checkbox" id="task5">
+                                <label for="task5">积极倾听：复述对方的话，确认理解正确</label>
+                            </div>
+                            <div class="task">
+                                <input type="checkbox" id="task6">
+                                <label for="task6">情感词汇扩展：每天学习并使用3个新的情感词汇</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">3</div>
+                    <div class="timeline-content">
+                        <h3>第三-四周：情感连接重建</h3>
+                        <div class="tasks">
+                            <div class="task">
+                                <input type="checkbox" id="task7">
+                                <label for="task7">共同活动：每周至少1次共同参与的线上活动</label>
+                            </div>
+                            <div class="task">
+                                <input type="checkbox" id="task8">
+                                <label for="task8">情感分享：每天分享1件当天的小事和对应的感受</label>
+                            </div>
+                            <div class="task">
+                                <input type="checkbox" id="task9">
+                                <label for="task9">未来规划：共同制定短期和长期的见面计划</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tips-box">
+                <h4>💡 温馨提示</h4>
+                <ul>
+                    <li>改变不是一蹴而就的，每一次尝试都是进步</li>
+                    <li>如果感到困难，可以回到这里重新查看建议</li>
+                    <li>严重的问题建议寻求专业心理咨询师的帮助</li>
+                </ul>
+            </div>
+
+            <button class="btn-secondary" onclick="goHome()">返回首页</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
