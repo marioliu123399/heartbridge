@@ -1,4 +1,580 @@
-// 全局状态
+// ==================== 用户认证与数据存储系统 ====================
+
+// 当前登录用户
+let currentUser = null;
+
+// 用户数据库（使用 localStorage 模拟）
+const USER_DB_KEY = 'heartbridge_users';
+const CURRENT_USER_KEY = 'heartbridge_current_user';
+
+// 获取用户数据库
+function getUserDB() {
+    const db = localStorage.getItem(USER_DB_KEY);
+    return db ? JSON.parse(db) : {};
+}
+
+// 保存用户数据库
+function saveUserDB(db) {
+    localStorage.setItem(USER_DB_KEY, JSON.stringify(db));
+}
+
+// 获取当前用户
+function getCurrentUser() {
+    const user = localStorage.getItem(CURRENT_USER_KEY);
+    return user ? JSON.parse(user) : null;
+}
+
+// 设置当前用户
+function setCurrentUser(user) {
+    if (user) {
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    } else {
+        localStorage.removeItem(CURRENT_USER_KEY);
+    }
+}
+
+// 显示提示消息
+function showToast(message) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// ==================== 页面导航 ====================
+
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+    document.getElementById(pageId).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+// ==================== 认证功能 ====================
+
+// 显示登录页
+function showLogin() {
+    showPage('page-login');
+}
+
+// 显示注册页
+function showRegister() {
+    showPage('page-register');
+}
+
+// 选择注册角色
+let regRole = '';
+function selectRegRole(btn, role) {
+    regRole = role;
+    btn.parentElement.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+}
+
+// 注册
+function register() {
+    const username = document.getElementById('regUsername').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+
+    if (!username) {
+        showToast('请输入用户名');
+        return;
+    }
+    if (!password || password.length < 6) {
+        showToast('密码至少6位');
+        return;
+    }
+    if (password !== passwordConfirm) {
+        showToast('两次密码不一致');
+        return;
+    }
+    if (!regRole) {
+        showToast('请选择你的角色');
+        return;
+    }
+
+    const db = getUserDB();
+    if (db[username]) {
+        showToast('用户名已存在');
+        return;
+    }
+
+    // 创建用户
+    const user = {
+        username,
+        password, // 实际应用中应该加密
+        role: regRole,
+        createdAt: new Date().toISOString(),
+        records: []
+    };
+
+    db[username] = user;
+    saveUserDB(db);
+
+    // 自动登录
+    currentUser = { username, role: regRole };
+    setCurrentUser(currentUser);
+
+    showToast('注册成功！');
+    updateUIForUser();
+    goHome();
+}
+
+// 登录
+function login() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    if (!username || !password) {
+        showToast('请输入用户名和密码');
+        return;
+    }
+
+    const db = getUserDB();
+    const user = db[username];
+
+    if (!user || user.password !== password) {
+        showToast('用户名或密码错误');
+        return;
+    }
+
+    currentUser = { username: user.username, role: user.role };
+    setCurrentUser(currentUser);
+
+    showToast('登录成功！');
+    updateUIForUser();
+    goHome();
+}
+
+// 游客模式
+function guestLogin() {
+    currentUser = null;
+    setCurrentUser(null);
+    showToast('以游客模式进入');
+    updateUIForUser();
+    goHome();
+}
+
+// 退出登录
+function logout() {
+    currentUser = null;
+    setCurrentUser(null);
+    showToast('已退出登录');
+    updateUIForUser();
+    showLogin();
+}
+
+// 更新UI显示
+function updateUIForUser() {
+    const topNav = document.getElementById('topNav');
+    const navUser = document.getElementById('navUser');
+    const navGuest = document.getElementById('navGuest');
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const userQuickActions = document.getElementById('userQuickActions');
+    const guestStartBtn = document.getElementById('guestStartBtn');
+    const healthOverview = document.getElementById('healthOverview');
+
+    if (currentUser) {
+        topNav.style.display = 'flex';
+        navUser.style.display = 'flex';
+        navGuest.style.display = 'none';
+        userNameDisplay.textContent = currentUser.username;
+        userQuickActions.style.display = 'block';
+        guestStartBtn.style.display = 'none';
+        healthOverview.style.display = 'block';
+        updateHealthOverview();
+    } else {
+        topNav.style.display = 'none';
+        navUser.style.display = 'none';
+        navGuest.style.display = 'flex';
+        userQuickActions.style.display = 'none';
+        guestStartBtn.style.display = 'block';
+        healthOverview.style.display = 'none';
+    }
+}
+
+// ==================== 数据存储功能 ====================
+
+// 保存诊断记录
+function saveRecord(scores, reportContent) {
+    if (!currentUser) return;
+
+    const db = getUserDB();
+    const user = db[currentUser.username];
+    if (!user) return;
+
+    const record = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        scores: scores,
+        userData: { ...userData },
+        reportContent: reportContent
+    };
+
+    user.records.push(record);
+    saveUserDB(db);
+}
+
+// 获取用户所有记录
+function getUserRecords() {
+    if (!currentUser) return [];
+    const db = getUserDB();
+    const user = db[currentUser.username];
+    return user ? user.records : [];
+}
+
+// ==================== 历史记录页面 ====================
+
+function showHistory() {
+    const records = getUserRecords();
+    
+    // 更新统计
+    document.getElementById('totalRecords').textContent = records.length;
+    
+    if (records.length > 0) {
+        const first = new Date(records[0].date);
+        const latest = new Date(records[records.length - 1].date);
+        document.getElementById('firstRecord').textContent = first.toLocaleDateString('zh-CN');
+        document.getElementById('latestRecord').textContent = latest.toLocaleDateString('zh-CN');
+        
+        const avgScore = Math.round(records.reduce((sum, r) => sum + r.scores.overall, 0) / records.length);
+        document.getElementById('avgScore').textContent = avgScore;
+    } else {
+        document.getElementById('firstRecord').textContent = '-';
+        document.getElementById('latestRecord').textContent = '-';
+        document.getElementById('avgScore').textContent = '-';
+    }
+
+    // 绘制趋势图
+    drawHistoryChart(records);
+
+    // 生成列表
+    const listContainer = document.getElementById('historyList');
+    listContainer.innerHTML = '';
+    
+    if (records.length === 0) {
+        listContainer.innerHTML = '<p style="text-align:center;color:var(--text-light);padding:40px;">暂无诊断记录，开始你的第一次诊断吧！</p>';
+    } else {
+        // 倒序显示
+        [...records].reverse().forEach(record => {
+            const date = new Date(record.date);
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.onclick = () => showHistoryDetail(record);
+            item.innerHTML = `
+                <div class="history-item-info">
+                    <div class="history-item-date">${date.toLocaleDateString('zh-CN')} ${date.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}</div>
+                    <div class="history-item-score">健康度: ${record.scores.overall}/100</div>
+                </div>
+                <div class="history-item-arrow">→</div>
+            `;
+            listContainer.appendChild(item);
+        });
+    }
+
+    showPage('page-history');
+}
+
+// 绘制历史趋势图
+function drawHistoryChart(records) {
+    const canvas = document.getElementById('historyChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // 设置canvas尺寸
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
+    const w = canvas.width;
+    const h = canvas.height;
+    const padding = 40;
+    
+    ctx.clearRect(0, 0, w, h);
+    
+    if (records.length < 2) {
+        ctx.fillStyle = '#999';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(records.length === 0 ? '暂无数据' : '至少需要2次记录才能显示趋势', w/2, h/2);
+        return;
+    }
+    
+    // 绘制坐标轴
+    ctx.strokeStyle = '#e0e0e0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding, padding);
+    ctx.lineTo(padding, h - padding);
+    ctx.lineTo(w - padding, h - padding);
+    ctx.stroke();
+    
+    // 绘制数据点和线
+    const scores = records.map(r => r.scores.overall);
+    const maxScore = 100;
+    const minScore = 0;
+    const xStep = (w - 2 * padding) / (records.length - 1);
+    const yScale = (h - 2 * padding) / (maxScore - minScore);
+    
+    // 绘制线条
+    ctx.strokeStyle = '#FF6B8A';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    scores.forEach((score, i) => {
+        const x = padding + i * xStep;
+        const y = h - padding - (score - minScore) * yScale;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    
+    // 绘制数据点
+    scores.forEach((score, i) => {
+        const x = padding + i * xStep;
+        const y = h - padding - (score - minScore) * yScale;
+        
+        ctx.fillStyle = '#FF6B8A';
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 显示分数
+        ctx.fillStyle = '#333';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(score, x, y - 12);
+    });
+    
+    // Y轴标签
+    ctx.fillStyle = '#999';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 100; i += 25) {
+        const y = h - padding - i * yScale;
+        ctx.fillText(i, padding - 8, y + 4);
+    }
+}
+
+// 显示历史详情
+function showHistoryDetail(record) {
+    const date = new Date(record.date);
+    document.getElementById('historyDetailDate').textContent = 
+        `${date.toLocaleDateString('zh-CN')} ${date.toLocaleTimeString('zh-CN')}`;
+    
+    // 重新生成报告内容
+    const scores = record.scores;
+    const savedUserData = record.userData;
+    
+    // 临时恢复数据
+    const originalUserData = { ...userData };
+    Object.assign(userData, savedUserData);
+    
+    generateReportContent(scores);
+    
+    // 恢复当前数据
+    Object.assign(userData, originalUserData);
+    
+    showPage('page-history-detail');
+}
+
+// ==================== 个人中心 ====================
+
+function showProfile() {
+    if (!currentUser) return;
+    
+    const db = getUserDB();
+    const user = db[currentUser.username];
+    if (!user) return;
+    
+    const records = user.records;
+    
+    document.getElementById('profileName').textContent = user.username;
+    document.getElementById('profileRole').textContent = user.role === 'husband' ? '丈夫' : (user.role === 'wife' ? '妻子' : '双方');
+    document.getElementById('profileJoinDate').textContent = '加入时间：' + new Date(user.createdAt).toLocaleDateString('zh-CN');
+    
+    document.getElementById('profileTotalRecords').textContent = records.length;
+    
+    if (records.length > 0) {
+        const bestScore = Math.max(...records.map(r => r.scores.overall));
+        document.getElementById('profileBestScore').textContent = bestScore;
+    } else {
+        document.getElementById('profileBestScore').textContent = '-';
+    }
+    
+    // 计算连续记录天数
+    document.getElementById('profileCurrentStreak').textContent = calculateStreak(records);
+    
+    showPage('page-profile');
+}
+
+// 计算连续记录天数
+function calculateStreak(records) {
+    if (records.length === 0) return 0;
+    
+    const dates = records.map(r => new Date(r.date).toDateString());
+    const uniqueDates = [...new Set(dates)].sort((a, b) => new Date(b) - new Date(a));
+    
+    let streak = 1;
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    
+    if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) {
+        return 0; // 断掉了
+    }
+    
+    for (let i = 1; i < uniqueDates.length; i++) {
+        const prevDate = new Date(uniqueDates[i-1]);
+        const currDate = new Date(uniqueDates[i]);
+        const diff = (prevDate - currDate) / 86400000;
+        
+        if (diff === 1) {
+            streak++;
+        } else {
+            break;
+        }
+    }
+    
+    return streak;
+}
+
+// 清除所有数据
+function clearAllData() {
+    if (!confirm('确定要清除所有数据吗？此操作不可恢复！')) return;
+    
+    const db = getUserDB();
+    if (currentUser && db[currentUser.username]) {
+        db[currentUser.username].records = [];
+        saveUserDB(db);
+        showToast('数据已清除');
+        showProfile();
+    }
+}
+
+// ==================== 首页健康度概览 ====================
+
+function updateHealthOverview() {
+    const records = getUserRecords();
+    const canvas = document.getElementById('trendCanvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    
+    ctx.clearRect(0, 0, w, h);
+    
+    if (records.length === 0) {
+        document.getElementById('overviewText').textContent = '还没有诊断记录，开始第一次诊断吧！';
+        return;
+    }
+    
+    // 显示最近3次或全部
+    const recentRecords = records.slice(-5);
+    const scores = recentRecords.map(r => r.scores.overall);
+    
+    // 绘制迷你趋势图
+    const padding = 10;
+    const xStep = (w - 2 * padding) / (scores.length - 1 || 1);
+    const yScale = (h - 2 * padding) / 100;
+    
+    ctx.strokeStyle = '#FF6B8A';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    if (scores.length === 1) {
+        const y = h - padding - scores[0] * yScale;
+        ctx.moveTo(padding, y);
+        ctx.lineTo(w - padding, y);
+    } else {
+        scores.forEach((score, i) => {
+            const x = padding + i * xStep;
+            const y = h - padding - score * yScale;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+    }
+    ctx.stroke();
+    
+    // 数据点
+    scores.forEach((score, i) => {
+        const x = padding + i * (scores.length === 1 ? (w - 2 * padding) : xStep);
+        const y = h - padding - score * yScale;
+        ctx.fillStyle = '#FF6B8A';
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    
+    // 更新文字
+    const latest = scores[scores.length - 1];
+    const prev = scores.length > 1 ? scores[scores.length - 2] : latest;
+    const change = latest - prev;
+    
+    let text = `最近健康度: ${latest}/100`;
+    if (change > 0) text += ` (↑${change})`;
+    else if (change < 0) text += ` (↓${Math.abs(change)})`;
+    else text += ` (持平)`;
+    
+    document.getElementById('overviewText').textContent = text;
+}
+
+// ==================== 报告对比功能 ====================
+
+function showComparison(scores) {
+    const records = getUserRecords();
+    const comparisonSection = document.getElementById('comparisonSection');
+    const comparisonContent = document.getElementById('comparisonContent');
+    
+    if (records.length === 0) {
+        comparisonSection.style.display = 'none';
+        return;
+    }
+    
+    comparisonSection.style.display = 'block';
+    
+    const lastRecord = records[records.length - 1];
+    const lastScores = lastRecord.scores;
+    
+    const dimensions = [
+        { key: 'overall', label: '整体健康度' },
+        { key: 'connection', label: '情感连接度' },
+        { key: 'communication', label: '沟通质量' },
+        { key: 'intimacy', label: '亲密度' }
+    ];
+    
+    comparisonContent.innerHTML = dimensions.map(dim => {
+        const current = scores[dim.key];
+        const previous = lastScores[dim.key];
+        const change = current - previous;
+        const changeClass = change > 0 ? 'up' : (change < 0 ? 'down' : '');
+        const changeSymbol = change > 0 ? '↑' : (change < 0 ? '↓' : '→');
+        
+        return `
+            <div class="comparison-item">
+                <div class="comp-label">${dim.label}</div>
+                <div class="comp-value">${current}</div>
+                <div class="comp-change ${changeClass}">${changeSymbol} ${Math.abs(change)}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== 原有功能（保持不变）====================
+
 let userData = {
     role: '',
     marriageYears: '',
@@ -18,21 +594,10 @@ let userData = {
     emotions: []
 };
 
-// 页面切换
-function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    document.getElementById(pageId).classList.add('active');
-    window.scrollTo(0, 0);
-}
-
-// 开始诊断
 function startDiagnosis() {
     showPage('page-role');
 }
 
-// 选择角色
 function selectRole(role) {
     userData.role = role;
     document.querySelectorAll('.role-card').forEach(card => {
@@ -45,11 +610,8 @@ function selectRole(role) {
     }, 300);
 }
 
-// 选择选项
 function selectOption(btn, field, value) {
     userData[field] = value;
-    
-    // 同一组内取消其他选中
     const parent = btn.parentElement;
     parent.querySelectorAll('.option-btn').forEach(b => {
         b.classList.remove('selected');
@@ -57,17 +619,13 @@ function selectOption(btn, field, value) {
     btn.classList.add('selected');
 }
 
-// 更新滑块值
 function updateSliderValue(slider, valueId, suffix = '') {
     const value = slider.value;
     document.getElementById(valueId).textContent = value + suffix;
-    
-    // 更新userData
     const field = slider.id;
     userData[field] = parseInt(value);
 }
 
-// 切换情绪标签
 function toggleEmotion(tag) {
     tag.classList.toggle('selected');
     const emotion = tag.textContent;
@@ -81,65 +639,57 @@ function toggleEmotion(tag) {
     }
 }
 
-// 跳转到情感评估
 function goToEmotionAssessment() {
     if (!userData.marriageYears || !userData.remoteYears || !userData.meetFrequency || !userData.hasChildren) {
-        alert('请完成所有问题的选择');
+        showToast('请完成所有问题的选择');
         return;
     }
     showPage('page-emotion');
 }
 
-// 跳转到认知评估
 function goToCognition() {
     showPage('page-cognition');
 }
 
-// 跳转到对话分析
 function goToDialogue() {
     if (!userData.attribution) {
-        alert('请选择问题归因');
+        showToast('请选择问题归因');
         return;
     }
     showPage('page-dialogue');
 }
 
-// 生成报告
 function generateReport() {
-    // 收集对话数据
     userData.situation = document.getElementById('situation').value;
     userData.partnerDialogue = document.getElementById('partnerDialogue').value;
     userData.myResponse = document.getElementById('myResponse').value;
     
     if (!userData.partnerDialogue.trim()) {
-        alert('请填写对方的对话内容，以便进行分析');
+        showToast('请填写对方的对话内容，以便进行分析');
         return;
     }
     
-    // 计算分数
     const scores = calculateScores();
-    
-    // 生成报告内容
     generateReportContent(scores);
     
-    // 显示报告页面
+    // 显示对比（如果有历史记录）
+    showComparison(scores);
+    
+    // 保存记录（如果已登录）
+    saveRecord(scores, null);
+    
     showPage('page-report');
 }
 
-// 计算分数
 function calculateScores() {
     const satisfaction = userData.satisfaction;
     const lovePerceived = userData.lovePerceived;
     const confidence = userData.confidence;
     const communication = userData.communication;
     
-    // 情感连接度
     const connection = Math.round((satisfaction + lovePerceived) / 2 * 10);
-    
-    // 沟通质量
     const commScore = communication * 10;
     
-    // 冲突处理（基于归因和沟通）
     let conflictScore = communication * 8;
     if (userData.attribution === '双方都有责任') {
         conflictScore += 20;
@@ -148,10 +698,7 @@ function calculateScores() {
     }
     conflictScore = Math.min(100, conflictScore);
     
-    // 亲密度
     const intimacy = Math.round((lovePerceived + confidence) / 2 * 10);
-    
-    // 整体健康度
     const overall = Math.round((connection + commScore + conflictScore + intimacy) / 4);
     
     return {
@@ -163,40 +710,25 @@ function calculateScores() {
     };
 }
 
-// 生成报告内容
 function generateReportContent(scores) {
-    // 设置日期
     document.getElementById('reportDate').textContent = new Date().toLocaleDateString('zh-CN');
-    
-    // 设置分数
     document.querySelector('#overallScore .score-number').textContent = scores.overall;
     
-    // 设置各项分数和进度条
     setScoreBar('connection', scores.connection);
     setScoreBar('communication', scores.communication);
     setScoreBar('conflict', scores.conflict);
     setScoreBar('intimacy', scores.intimacy);
     
-    // 生成问题诊断
     generateProblems(scores);
-    
-    // 生成依恋分析
     generateAttachmentAnalysis();
-    
-    // 生成对话分析
     generateDialogueAnalysis();
-    
-    // 生成解决方案
     generateSolutions(scores);
 }
 
-// 设置分数条
 function setScoreBar(type, score) {
     document.getElementById(type + 'Score').textContent = score;
     const bar = document.getElementById(type + 'Bar');
     bar.style.width = score + '%';
-    
-    // 设置颜色
     bar.className = 'score-fill';
     if (score >= 70) {
         bar.classList.add('high');
@@ -207,14 +739,12 @@ function setScoreBar(type, score) {
     }
 }
 
-// 生成问题诊断
 function generateProblems(scores) {
     const problemsList = document.getElementById('problemsList');
     problemsList.innerHTML = '';
     
     const problems = [];
     
-    // 付出感失衡
     const effortDiff = Math.abs(userData.selfEffort - userData.partnerEffort);
     if (effortDiff > 20 || (userData.selfEffort + userData.partnerEffort > 120)) {
         problems.push({
@@ -224,7 +754,6 @@ function generateProblems(scores) {
         });
     }
     
-    // 沟通问题
     if (scores.communication < 60) {
         problems.push({
             title: '沟通质量待提升',
@@ -233,7 +762,6 @@ function generateProblems(scores) {
         });
     }
     
-    // 归因偏差
     if (userData.attribution === '主要是对方的问题' || userData.attribution === '主要是我自己的问题') {
         problems.push({
             title: '归因偏差',
@@ -242,7 +770,6 @@ function generateProblems(scores) {
         });
     }
     
-    // 情感连接弱
     if (scores.connection < 60) {
         problems.push({
             title: '情感连接减弱',
@@ -251,7 +778,6 @@ function generateProblems(scores) {
         });
     }
     
-    // 如果没有明显问题
     if (problems.length === 0) {
         problems.push({
             title: '关系整体健康',
@@ -272,15 +798,12 @@ function generateProblems(scores) {
     });
 }
 
-// 生成依恋分析
 function generateAttachmentAnalysis() {
     const container = document.getElementById('attachmentAnalysis');
     
-    // 根据用户角色和回答判断依恋类型
     let myType, partnerType;
     
     if (userData.role === 'husband') {
-        // 丈夫倾向于回避型（从对话分析）
         myType = { name: '回避型', desc: '重视独立，情感表达较含蓄，面对冲突倾向于理性分析或回避', icon: '🛡️' };
         partnerType = { name: '焦虑型', desc: '渴望亲密，需要反复确认被爱，容易感到被忽视', icon: '💝' };
     } else if (userData.role === 'wife') {
@@ -291,7 +814,6 @@ function generateAttachmentAnalysis() {
         partnerType = { name: '回避型', desc: '重视独立，情感表达较含蓄', icon: '🛡️' };
     }
     
-    // 根据沟通评分调整
     if (userData.communication >= 7) {
         myType = { name: '安全型', desc: '信任他人，能平衡亲密与独立，沟通较顺畅', icon: '✅' };
     }
@@ -318,7 +840,6 @@ function generateAttachmentAnalysis() {
     `;
 }
 
-// 生成对话分析
 function generateDialogueAnalysis() {
     const container = document.getElementById('dialogueAnalysis');
     
@@ -327,13 +848,11 @@ function generateDialogueAnalysis() {
         return;
     }
     
-    // 分析对话内容
     const dialogue = userData.partnerDialogue.toLowerCase();
     const hasAnger = dialogue.includes('妈') || dialogue.includes('烦') || dialogue.includes('怨');
     const hasComplaint = dialogue.includes('不是') || dialogue.includes('才') || dialogue.includes('都');
     const hasHurt = dialogue.includes('心寒') || dialogue.includes('受伤') || dialogue.includes('委屈');
     
-    // 判断沟通姿态
     let posture = '指责型';
     if (dialogue.includes('随便') || dialogue.includes('无所谓')) {
         posture = '打岔/回避型';
@@ -341,14 +860,12 @@ function generateDialogueAnalysis() {
         posture = '超理智型';
     }
     
-    // 判断情绪
     let emotions = [];
     if (hasAnger) emotions.push('愤怒');
     if (hasComplaint) emotions.push('委屈');
     if (hasHurt) emotions.push('伤心');
     if (emotions.length === 0) emotions = ['不满', '失望'];
     
-    // 判断深层需求
     let need = '被认可、被看见';
     if (dialogue.includes('关心') || dialogue.includes('爱')) {
         need = '被关心、被爱';
@@ -392,14 +909,12 @@ function generateDialogueAnalysis() {
     `;
 }
 
-// 生成解决方案
 function generateSolutions(scores) {
     const container = document.getElementById('solutionsList');
     container.innerHTML = '';
     
     const solutions = [];
     
-    // 付出感失衡方案
     if (Math.abs(userData.selfEffort - userData.partnerEffort) > 20) {
         solutions.push({
             title: '🎯 破解付出感失衡',
@@ -412,7 +927,6 @@ function generateSolutions(scores) {
         });
     }
     
-    // 沟通改善方案
     if (scores.communication < 70) {
         solutions.push({
             title: '💬 改善沟通模式',
@@ -425,7 +939,6 @@ function generateSolutions(scores) {
         });
     }
     
-    // 情感连接方案
     if (scores.connection < 70 || scores.intimacy < 70) {
         solutions.push({
             title: '❤️ 重建情感连接',
@@ -438,7 +951,6 @@ function generateSolutions(scores) {
         });
     }
     
-    // 通用建议
     solutions.push({
         title: '🌱 日常维护建议',
         items: [
@@ -462,14 +974,11 @@ function generateSolutions(scores) {
     });
 }
 
-// 显示行动计划
 function showActionPlan() {
     showPage('page-action');
 }
 
-// 返回首页
 function goHome() {
-    // 重置数据
     userData = {
         role: '',
         marriageYears: '',
@@ -489,7 +998,6 @@ function goHome() {
         emotions: []
     };
     
-    // 重置UI
     document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
     document.querySelectorAll('.emotion-tag').forEach(tag => tag.classList.remove('selected'));
     document.querySelectorAll('.role-card').forEach(card => card.classList.remove('selected'));
@@ -501,16 +1009,22 @@ function goHome() {
         if (el) el.textContent = '5';
     });
     
+    // 更新首页健康度概览
+    updateHealthOverview();
+    
     showPage('page-home');
 }
 
-// 重新开始
 function restart() {
     goHome();
 }
 
-// 页面加载完成后的初始化
+// ==================== 初始化 ====================
+
 document.addEventListener('DOMContentLoaded', function() {
-    // 可以在这里添加更多初始化逻辑
+    // 检查是否有已登录用户
+    currentUser = getCurrentUser();
+    updateUIForUser();
+    
     console.log('心桥 HeartBridge 已加载');
 });

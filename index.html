@@ -8,6 +8,93 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- 顶部导航栏 -->
+    <nav class="top-nav" id="topNav" style="display:none;">
+        <div class="nav-brand">
+            <span class="nav-icon">🌉</span>
+            <span class="nav-title">心桥</span>
+        </div>
+        <div class="nav-user" id="navUser" style="display:none;">
+            <span class="user-name" id="userNameDisplay"></span>
+            <button class="nav-btn" onclick="showHistory()">📋 历史记录</button>
+            <button class="nav-btn" onclick="showProfile()">👤 个人中心</button>
+            <button class="nav-btn logout" onclick="logout()">退出</button>
+        </div>
+        <div class="nav-guest" id="navGuest">
+            <button class="nav-btn" onclick="showLogin()">登录</button>
+            <button class="nav-btn primary" onclick="showRegister()">注册</button>
+        </div>
+    </nav>
+
+    <!-- 登录页 -->
+    <div id="page-login" class="page">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <span class="logo-icon">🌉</span>
+                    <h2>欢迎回到心桥</h2>
+                    <p>登录后继续你的情感修复之旅</p>
+                </div>
+                <div class="auth-form">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" class="text-input" id="loginUsername" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" class="text-input" id="loginPassword" placeholder="请输入密码">
+                    </div>
+                    <button class="btn-primary btn-full" onclick="login()">登录</button>
+                    <div class="auth-switch">
+                        还没有账号？<a onclick="showRegister()">立即注册</a>
+                    </div>
+                    <div class="auth-divider">
+                        <span>或</span>
+                    </div>
+                    <button class="btn-secondary btn-full" onclick="guestLogin()">👤 游客模式（不保存数据）</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册页 -->
+    <div id="page-register" class="page">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <span class="logo-icon">🌉</span>
+                    <h2>加入心桥</h2>
+                    <p>创建账号，记录你的情感成长历程</p>
+                </div>
+                <div class="auth-form">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" class="text-input" id="regUsername" placeholder="设置用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" class="text-input" id="regPassword" placeholder="设置密码（至少6位）">
+                    </div>
+                    <div class="form-group">
+                        <label>确认密码</label>
+                        <input type="password" class="text-input" id="regPasswordConfirm" placeholder="再次输入密码">
+                    </div>
+                    <div class="form-group">
+                        <label>你的角色</label>
+                        <div class="option-group">
+                            <button class="option-btn" onclick="selectRegRole(this, 'husband')">👨 丈夫</button>
+                            <button class="option-btn" onclick="selectRegRole(this, 'wife')">👩 妻子</button>
+                        </div>
+                    </div>
+                    <button class="btn-primary btn-full" onclick="register()">注册</button>
+                    <div class="auth-switch">
+                        已有账号？<a onclick="showLogin()">立即登录</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 首页 -->
     <div id="page-home" class="page active">
         <div class="hero">
@@ -18,10 +105,35 @@
             </div>
             <p class="tagline">重建爱的连接，修复夫妻关系</p>
             <p class="description">基于专业心理学理论，帮助异地夫妻识别问题、改善沟通、重建感情</p>
-            <button class="btn-primary" onclick="startDiagnosis()">
-                <span>开始情感诊断</span>
-                <span class="arrow">→</span>
-            </button>
+            
+            <!-- 已登录用户显示快捷入口 -->
+            <div id="userQuickActions" style="display:none; margin-bottom: 24px;">
+                <button class="btn-primary" onclick="startDiagnosis()">
+                    <span>开始新的诊断</span>
+                    <span class="arrow">→</span>
+                </button>
+                <button class="btn-secondary" onclick="showHistory()" style="margin-left: 12px;">
+                    <span>📋 查看历史记录</span>
+                </button>
+            </div>
+
+            <!-- 未登录用户显示开始按钮 -->
+            <div id="guestStartBtn">
+                <button class="btn-primary" onclick="startDiagnosis()">
+                    <span>开始情感诊断</span>
+                    <span class="arrow">→</span>
+                </button>
+            </div>
+
+            <!-- 健康度概览（已登录） -->
+            <div id="healthOverview" class="health-overview" style="display:none;">
+                <h3>📈 你的关系健康趋势</h3>
+                <div class="mini-chart" id="miniChart">
+                    <canvas id="trendCanvas" width="400" height="150"></canvas>
+                </div>
+                <p class="overview-text" id="overviewText"></p>
+            </div>
+
             <div class="features">
                 <div class="feature">
                     <span class="feature-icon">🔍</span>
@@ -40,6 +152,106 @@
                     <span>健康追踪</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- 历史记录页 -->
+    <div id="page-history" class="page">
+        <div class="container">
+            <h2>📋 诊断历史记录</h2>
+            <p class="section-desc">查看你所有的诊断记录，追踪关系变化</p>
+            
+            <div class="history-stats" id="historyStats">
+                <div class="stat-card">
+                    <span class="stat-number" id="totalRecords">0</span>
+                    <span class="stat-label">总诊断次数</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="firstRecord">-</span>
+                    <span class="stat-label">首次诊断</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="latestRecord">-</span>
+                    <span class="stat-label">最近诊断</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="avgScore">-</span>
+                    <span class="stat-label">平均健康度</span>
+                </div>
+            </div>
+
+            <div class="history-chart-section">
+                <h3>健康度变化趋势</h3>
+                <div class="chart-container">
+                    <canvas id="historyChart" width="600" height="250"></canvas>
+                </div>
+            </div>
+
+            <div class="history-list" id="historyList">
+                <!-- 动态生成历史记录列表 -->
+            </div>
+
+            <button class="btn-primary" onclick="startDiagnosis()">开始新的诊断</button>
+            <button class="btn-secondary" onclick="goHome()">返回首页</button>
+        </div>
+    </div>
+
+    <!-- 历史详情页 -->
+    <div id="page-history-detail" class="page">
+        <div class="container">
+            <div class="history-detail-header">
+                <button class="back-btn" onclick="showHistory()">← 返回历史记录</button>
+                <h2>诊断详情</h2>
+                <p class="report-date" id="historyDetailDate"></p>
+            </div>
+            <div id="historyDetailContent">
+                <!-- 动态填充历史报告内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 个人中心页 -->
+    <div id="page-profile" class="page">
+        <div class="container">
+            <h2>👤 个人中心</h2>
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    <span id="profileAvatar">👤</span>
+                </div>
+                <div class="profile-info">
+                    <h3 id="profileName">-</h3>
+                    <p id="profileRole">-</p>
+                    <p id="profileJoinDate">加入时间：-</p>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h3>📊 数据统计</h3>
+                <div class="profile-stats">
+                    <div class="profile-stat">
+                        <span class="stat-value" id="profileTotalRecords">0</span>
+                        <span class="stat-name">诊断次数</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="stat-value" id="profileBestScore">-</span>
+                        <span class="stat-name">最高健康度</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="stat-value" id="profileCurrentStreak">0</span>
+                        <span class="stat-name">连续记录(天)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h3>⚙️ 设置</h3>
+                <div class="setting-item">
+                    <span>清除所有数据</span>
+                    <button class="btn-danger-small" onclick="clearAllData()">清除</button>
+                </div>
+            </div>
+
+            <button class="btn-secondary" onclick="goHome()">返回首页</button>
         </div>
     </div>
 
@@ -283,6 +495,14 @@
                 <span class="report-icon">📊</span>
                 <h2>你们的关系诊断报告</h2>
                 <p class="report-date">生成时间：<span id="reportDate"></span></p>
+            </div>
+
+            <!-- 与上次对比（已登录且有历史记录时显示） -->
+            <div class="report-section" id="comparisonSection" style="display:none;">
+                <h3>📈 与上次诊断对比</h3>
+                <div class="comparison" id="comparisonContent">
+                    <!-- 动态生成 -->
+                </div>
             </div>
 
             <!-- 健康度评分 -->
